@@ -27,10 +27,5 @@ public class ReservarNumerosRequest {
     @Min(value = 1, message = "Quantidade mínima é 1")
     @Max(value = 100, message = "Quantidade máxima é 100")
     private Integer quantidade;
-
-    /**
-     * Lista de números específicos (opcional)
-     * Se não informado, sistema escolhe aleatoriamente
-     */
     private List<@Min(1) Integer> numeros;
 }

@@ -31,13 +31,6 @@ public class UsuarioService {
         if (usuarioRepository.existsByEmail(usuario.getEmail())) {
             throw new BusinessException("Email já cadastrado");
         }
-
-        // Validar CPF único
-        if (usuarioRepository.existsByCpf(usuario.getCpf())) {
-            throw new BusinessException("CPF já cadastrado");
-        }
-
-        // Criptografar senha
         usuario.setSenha(passwordEncoder.encode(usuario.getSenha()));
 
         // Definir role padrão se não informado

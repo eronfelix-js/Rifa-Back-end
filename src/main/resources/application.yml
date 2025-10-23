@@ -49,12 +49,27 @@ spring:
     default-property-inclusion: non_null
     deserialization:
       fail-on-unknown-properties: false
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 5MB
+      max-request-size: 5MB
+      file-size-threshold: 2KB
+
+cloudinary:
+  cloud-name: ${CLOUDINARY_CLOUD_NAME:seu_cloud_name}
+  api-key: ${CLOUDINARY_API_KEY:sua_api_key}
+  api-secret: ${CLOUDINARY_API_SECRET:seu_api_secret}
 
 # Server
 server:
   port: 8080
 
 app:
+  upload:
+    dir: uploads/rifas
+    max-size: 5242880 # 5MB em bytes
+    allowed-types: image/jpeg,image/png,image/webp,image/jpg
   jwt:
     secret: ${JWT_SECRET}
     expiration: 3600000

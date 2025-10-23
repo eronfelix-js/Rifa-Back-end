@@ -35,6 +35,8 @@ public class CriarRifaRequest {
     @DecimalMax(value = "1000.00", message = "Preço máximo é R$ 1.000,00")
     private BigDecimal precoPorNumero;
 
+    private String imagemUrl;
+
     private LocalDateTime dataLimite;
 
     @Builder.Default

@@ -3,11 +3,13 @@ package dev.Felix.rifa_system.Controller;
 
 import dev.Felix.rifa_system.Entity.Rifa;
 import dev.Felix.rifa_system.Enum.StatusNumero;
+import dev.Felix.rifa_system.Mapper.DtoImage.ImagemUploadResponse;
 import dev.Felix.rifa_system.Mapper.DtoRifa.CriarRifaRequest;
 import dev.Felix.rifa_system.Mapper.DtoRifa.RifaDetalhadaResponse;
 import dev.Felix.rifa_system.Mapper.DtoRifa.RifaResponse;
 import dev.Felix.rifa_system.Mapper.DtoRifa.RifaResumoResponse;
 import dev.Felix.rifa_system.Mapper.RifaMapper;
+import dev.Felix.rifa_system.Service.ImagemService;
 import dev.Felix.rifa_system.Service.NumeroService;
 import dev.Felix.rifa_system.Service.RifaService;
 import jakarta.validation.Valid;
@@ -17,9 +19,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.UUID;
@@ -34,6 +38,7 @@ public class RifaController {
     private final RifaService rifaService;
     private final NumeroService numeroService;
     private final RifaMapper rifaMapper;
+    private final ImagemService imagemService;
 
     /**
      * Criar nova rifa (VENDEDOR)
@@ -48,6 +53,32 @@ public class RifaController {
         Rifa rifa = rifaMapper.toEntity(request, usuarioId);
         Rifa rifaCriada = rifaService.criar(rifa);
 
+        RifaResponse response = rifaMapper.toResponse(rifaCriada);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<RifaResponse> criarComImagem(
+            @RequestPart("rifa") @Valid CriarRifaRequest request,
+            @RequestPart(value = "imagem", required = false) MultipartFile imagem,
+            Authentication authentication) {
+
+        UUID usuarioId = UUID.fromString(authentication.getName());
+
+        // Upload da imagem se fornecida
+        String imagemUrl = null;
+        if (imagem != null && !imagem.isEmpty()) {
+            ImagemUploadResponse uploadResponse = imagemService.uploadImagemRifa(
+                    imagem,
+                    "temp-" + UUID.randomUUID()
+            );
+            imagemUrl = uploadResponse.getUrl();
+            request.setImagemUrl(imagemUrl);
+        }
+
+        Rifa rifa = rifaMapper.toEntity(request, usuarioId);
+        Rifa rifaCriada = rifaService.criar(rifa);
         RifaResponse response = rifaMapper.toResponse(rifaCriada);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);

@@ -25,19 +25,19 @@ public class CorsConfig {
 
         // Headers permitidos
         configuration.setAllowedHeaders(Arrays.asList(
-            "Origin",
-            "Content-Type",
-            "Accept",
-            "Authorization",
-            "Access-Control-Allow-Origin",
-            "Access-Control-Request-Method",
-            "Access-Control-Request-Headers",
+            "Origin", 
+            "Content-Type", 
+            "Accept", 
+            "Authorization", 
+            "Access-Control-Allow-Origin", 
+            "Access-Control-Request-Method", 
+            "Access-Control-Request-Headers", 
             "Access-Control-Allow-Credentials"
         ));
 
         // Expor headers
         configuration.setExposedHeaders(Arrays.asList(
-            "Access-Control-Allow-Origin",
+            "Access-Control-Allow-Origin", 
             "Access-Control-Allow-Credentials"
         ));
 
