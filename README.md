@@ -446,15 +446,8 @@ Contribuições são bem-vindas! Por favor:
 
 Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
 
-## 📧 Contato
-
-**Desenvolvedor:** Seu Nome  
-**Email:** seu.email@exemplo.com  
-**LinkedIn:** [seu-linkedin](https://linkedin.com/in/seu-perfil)  
-**Portfolio:** [seu-portfolio.com](https://seu-portfolio.com)
-
----
 
 ⭐ Se este projeto te ajudou, deixe uma estrela!
 
 Made with ❤️ and ☕ in Belém, PA
+
