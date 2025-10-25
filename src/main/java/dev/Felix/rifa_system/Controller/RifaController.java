@@ -40,9 +40,6 @@ public class RifaController {
     private final RifaMapper rifaMapper;
     private final ImagemService imagemService;
 
-    /**
-     * Criar nova rifa (VENDEDOR)
-     */
     @PostMapping
     public ResponseEntity<RifaResponse> criar(
             @Valid @RequestBody CriarRifaRequest request,
@@ -59,27 +56,25 @@ public class RifaController {
     }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<RifaResponse> criarComImagem(
+    public ResponseEntity<RifaResponse> criar(
             @RequestPart("rifa") @Valid CriarRifaRequest request,
             @RequestPart(value = "imagem", required = false) MultipartFile imagem,
             Authentication authentication) {
 
+        log.info("===== CONTROLLER - CRIAR RIFA =====");
+        log.info("Request recebido: {}", request);
+        log.info("Imagem recebida no controller: {}",
+                imagem != null ? imagem.getOriginalFilename() : "NULL");
+        log.info("Tamanho da imagem: {}",
+                imagem != null ? imagem.getSize() : "N/A");
+
         UUID usuarioId = UUID.fromString(authentication.getName());
 
-        // Upload da imagem se fornecida
-        String imagemUrl = null;
-        if (imagem != null && !imagem.isEmpty()) {
-            ImagemUploadResponse uploadResponse = imagemService.uploadImagemRifa(
-                    imagem,
-                    "temp-" + UUID.randomUUID()
-            );
-            imagemUrl = uploadResponse.getUrl();
-            request.setImagemUrl(imagemUrl);
-        }
+        Rifa rifaCriada = rifaService.criarComImagem(request, imagem, usuarioId);
 
-        Rifa rifa = rifaMapper.toEntity(request, usuarioId);
-        Rifa rifaCriada = rifaService.criar(rifa);
         RifaResponse response = rifaMapper.toResponse(rifaCriada);
+
+        log.info("Response: imagemUrl = {}", response.getImagemUrl());
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }

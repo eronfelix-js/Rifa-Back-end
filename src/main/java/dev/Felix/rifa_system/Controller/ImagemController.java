@@ -31,11 +31,7 @@ public class ImagemController {
             Authentication authentication
     ) {
         log.info("POST /api/v1/imagens/rifa/{} - Upload de imagem", rifaId);
-
-        // Você pode adicionar validação se o usuário é dono da rifa
-
         ImagemUploadResponse response = imagemService.uploadImagemRifa(file, rifaId);
-
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 

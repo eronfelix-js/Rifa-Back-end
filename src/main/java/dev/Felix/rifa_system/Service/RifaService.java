@@ -7,15 +7,18 @@ import dev.Felix.rifa_system.Enum.StatusNumero;
 import dev.Felix.rifa_system.Enum.StatusRifa;
 import dev.Felix.rifa_system.Exceptions.BusinessException;
 import dev.Felix.rifa_system.Exceptions.ResourceNotFoundException;
+import dev.Felix.rifa_system.Mapper.DtoImage.ImagemUploadResponse;
+import dev.Felix.rifa_system.Mapper.DtoRifa.CriarRifaRequest;
+import dev.Felix.rifa_system.Mapper.RifaMapper;
 import dev.Felix.rifa_system.Repository.NumeroRepository;
 import dev.Felix.rifa_system.Repository.RifaRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -30,12 +33,11 @@ public class RifaService {
     private final RifaRepository rifaRepository;
     private final NumeroRepository numeroRepository;
     private final UsuarioService usuarioService;
-
+    private final RifaMapper rifaMapper;
+    private final ImagemService imagemService;
 
     private Integer quantidadeMinima = 50;
-
     private Integer quantidadeMaxima = 100000;
-
     private Integer multiploDe = 10;
 
     @Transactional
@@ -65,6 +67,51 @@ public class RifaService {
 
         log.info("Rifa criada com sucesso: {}", rifaSalva.getId());
         return rifaSalva;
+    }
+
+    @Transactional
+    public Rifa criarComImagem(CriarRifaRequest request, MultipartFile imagem, UUID usuarioId) {
+        log.info("===== CRIANDO RIFA COM IMAGEM =====");
+        log.info("Usuário: {}", usuarioId);
+        log.info("Título: {}", request.getTitulo());
+        log.info("Imagem recebida: {}", imagem != null ? imagem.getOriginalFilename() : "NULL");
+        log.info("Imagem vazia: {}", imagem != null ? imagem.isEmpty() : "N/A");
+
+        // 1️⃣ Criar a rifa primeiro
+        Rifa rifa = rifaMapper.toEntity(request, usuarioId);
+        Rifa rifaCriada = criar(rifa);
+
+        log.info("✅ Rifa criada com ID: {}", rifaCriada.getId());
+
+        // 2️⃣ Upload da imagem
+        if (imagem != null && !imagem.isEmpty()) {
+            try {
+                log.info("🔄 Iniciando upload da imagem...");
+                log.info("Tamanho: {} bytes", imagem.getSize());
+                log.info("Content-Type: {}", imagem.getContentType());
+
+                ImagemUploadResponse uploadResponse = imagemService.uploadImagemRifa(
+                        imagem,
+                        rifaCriada.getId().toString()
+                );
+
+                log.info("✅ Upload concluído. URL: {}", uploadResponse.getUrl());
+
+                rifaCriada.setImagemUrl(uploadResponse.getUrl());
+                rifaCriada = rifaRepository.save(rifaCriada);
+
+                log.info("✅ Rifa atualizada com imagem no banco");
+
+            } catch (Exception e) {
+                log.error("❌ ERRO NO UPLOAD DA IMAGEM: ", e);
+                log.error("Mensagem: {}", e.getMessage());
+            }
+        } else {
+            log.warn("⚠️ Nenhuma imagem foi enviada ou imagem está vazia");
+        }
+
+        log.info("===== FIM CRIAÇÃO RIFA =====");
+        return rifaCriada;
     }
 
     private void gerarNumeros(Rifa rifa) {
