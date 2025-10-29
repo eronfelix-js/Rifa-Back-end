@@ -1,5 +1,6 @@
 package dev.Felix.rifa_system.Mapper.DtoRifa;
 
+import dev.Felix.rifa_system.Enum.TipoRifa;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -17,6 +18,9 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CriarRifaRequest {
+
+    @NotNull
+    private TipoRifa tipo;
 
     @NotBlank(message = "Título é obrigatório")
     @Size(min = 5, max = 200, message = "Título deve ter entre 5 e 200 caracteres")

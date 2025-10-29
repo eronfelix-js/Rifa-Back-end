@@ -53,6 +53,9 @@ public class Usuario {
     @Column(nullable = false)
     private LocalDateTime dataAtualizacao;
 
+    @Column(length = 100)
+    private String chavePix;
+
     // Métodos auxiliares
     public boolean isVendedor() {
         return this.role == RoleUsuario.VENDEDOR;

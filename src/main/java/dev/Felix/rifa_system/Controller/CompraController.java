@@ -4,16 +4,16 @@ package dev.Felix.rifa_system.Controller;
 import dev.Felix.rifa_system.Entity.Compra;
 import dev.Felix.rifa_system.Entity.Pagamento;
 import dev.Felix.rifa_system.Entity.Rifa;
+import dev.Felix.rifa_system.Entity.Usuario;
 import dev.Felix.rifa_system.Mapper.CompraMapper;
+import dev.Felix.rifa_system.Mapper.DtoCompras.AprovarCompraRequest;
 import dev.Felix.rifa_system.Mapper.DtoCompras.CompraResponse;
+import dev.Felix.rifa_system.Mapper.DtoCompras.ComprovanteUploadResponse;
 import dev.Felix.rifa_system.Mapper.DtoCompras.ReservaResponse;
 import dev.Felix.rifa_system.Mapper.DtoNumeros.ReservarNumerosRequest;
 import dev.Felix.rifa_system.Mapper.DtoPagamento.PagamentoPixResponse;
 import dev.Felix.rifa_system.Mapper.PagamentoMapper;
-import dev.Felix.rifa_system.Service.CompraService;
-import dev.Felix.rifa_system.Service.NumeroService;
-import dev.Felix.rifa_system.Service.PagamentoService;
-import dev.Felix.rifa_system.Service.RifaService;
+import dev.Felix.rifa_system.Service.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +24,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.UUID;
@@ -40,44 +41,112 @@ public class CompraController {
     private final NumeroService numeroService;
     private final CompraMapper compraMapper;
     private final PagamentoMapper pagamentoMapper;
+    private final UsuarioService usuarioService;
 
-    /**
-     * Reservar números (CLIENTE)
-     */
     @PostMapping("/reservar")
-     public ResponseEntity<ReservaResponse> reservar(
+    public ResponseEntity<ReservaResponse> reservar(
             @Valid @RequestBody ReservarNumerosRequest request,
             Authentication authentication
     ) {
         log.info("POST /api/v1/compras/reservar - Reservando {} números da rifa {}",
                 request.getQuantidade(), request.getRifaId());
-
         UUID compradorId = UUID.fromString(authentication.getName());
-
-        // Reservar números
         Compra compra = compraService.reservarNumeros(
                 request.getRifaId(),
                 compradorId,
                 request.getQuantidade(),
                 request.getNumeros()
         );
-
-        // Buscar números reservados
         List<Integer> numeros = numeroService.buscarNumerosDaCompra(compra.getId());
-
-        // Buscar título da rifa
         Rifa rifa = rifaService.buscarPorId(request.getRifaId());
-
-        // Criar response da reserva
-        ReservaResponse response = compraMapper.toReservaResponse(compra, numeros, rifa.getTitulo());
-
+        Usuario vendedor = usuarioService.buscarPorId(rifa.getUsuarioId());
+        ReservaResponse response = compraMapper.toReservaResponse(
+                compra, numeros, rifa.getTitulo(), rifa, vendedor
+        );
         log.info("Números reservados com sucesso - Compra: {}", compra.getId());
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     /**
-     * Gerar pagamento PIX após reserva
+     * ✅ NOVO: Upload de comprovante
      */
+    @PostMapping("/{compraId}/comprovante")
+    public ResponseEntity<ComprovanteUploadResponse> uploadComprovante(
+            @PathVariable UUID compraId,
+            @RequestParam("comprovante") MultipartFile arquivo,
+            Authentication authentication
+    ) {
+        log.info("POST /api/v1/compras/{}/comprovante", compraId);
+
+        UUID compradorId = UUID.fromString(authentication.getName());
+
+        Compra compra = compraService.uploadComprovante(compraId, arquivo, compradorId);
+
+        ComprovanteUploadResponse response = ComprovanteUploadResponse.builder()
+                .compraId(compra.getId())
+                .comprovanteUrl(compra.getComprovanteUrl())
+                .dataUpload(compra.getDataUploadComprovante())
+                .mensagem("Comprovante enviado! Aguarde a aprovação do vendedor.")
+                .build();
+
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * ✅ NOVO: Vendedor aprovar compra
+     */
+    @PostMapping("/{compraId}/aprovar")
+    public ResponseEntity<Void> aprovar(
+            @PathVariable UUID compraId,
+            @Valid @RequestBody AprovarCompraRequest request,
+            Authentication authentication
+    ) {
+        log.info("POST /api/v1/compras/{}/aprovar", compraId);
+        UUID vendedorId = UUID.fromString(authentication.getName());
+        compraService.aprovarCompra(compraId, vendedorId, request.getObservacao());
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/{compraId}/rejeitar")
+    public ResponseEntity<Void> rejeitar(
+            @PathVariable UUID compraId,
+            @Valid @RequestBody AprovarCompraRequest request,
+            Authentication authentication
+    ) {
+        log.info("POST /api/v1/compras/{}/rejeitar", compraId);
+
+        UUID vendedorId = UUID.fromString(authentication.getName());
+
+        compraService.rejeitarCompra(compraId, vendedorId, request.getObservacao());
+
+        return ResponseEntity.noContent().build();
+    }
+    @GetMapping("/rifa/{rifaId}/pendentes")
+    public ResponseEntity<Page<CompraResponse>> listarPendentes(
+            @PathVariable UUID rifaId,
+            @PageableDefault(size = 20) Pageable pageable,
+            Authentication authentication
+    ) {
+        log.info("GET /api/v1/compras/rifa/{}/pendentes", rifaId);
+
+        UUID vendedorId = UUID.fromString(authentication.getName());
+
+        // Validar que é dono da rifa
+        Rifa rifa = rifaService.buscarPorId(rifaId);
+        if (!rifa.getUsuarioId().equals(vendedorId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        Page<Compra> compras = compraService.listarComprasPendentesComComprovante(rifaId, pageable);
+
+        Page<CompraResponse> response = compras.map(compra -> {
+            List<Integer> numeros = numeroService.buscarNumerosDaCompra(compra.getId());
+            return compraMapper.toResponse(compra, numeros);
+        });
+
+        return ResponseEntity.ok(response);
+    }
+
     @PostMapping("/{compraId}/pagamento/pix")
     public ResponseEntity<PagamentoPixResponse> gerarPagamentoPix(
             @PathVariable UUID compraId,

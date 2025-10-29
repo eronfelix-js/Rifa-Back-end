@@ -1,6 +1,9 @@
 package dev.Felix.rifa_system.Mapper;
 
 import dev.Felix.rifa_system.Entity.Compra;
+import dev.Felix.rifa_system.Entity.Rifa;
+import dev.Felix.rifa_system.Entity.Usuario;
+import dev.Felix.rifa_system.Enum.TipoRifa;
 import dev.Felix.rifa_system.Mapper.DtoCompras.CompraResponse;
 import dev.Felix.rifa_system.Mapper.DtoCompras.CompraResumoResponse;
 import dev.Felix.rifa_system.Mapper.DtoCompras.ReservaResponse;
@@ -39,27 +42,48 @@ public class CompraMapper {
     /**
      * Converte Entity para Response de Reserva
      */
-    public ReservaResponse toReservaResponse(Compra compra, List<Integer> numeros, String tituloRifa) {
+    public ReservaResponse toReservaResponse(
+            Compra compra,
+            List<Integer> numeros,
+            String tituloRifa,
+            Rifa rifa,  // ✅ NOVO parâmetro
+            Usuario vendedor  // ✅ NOVO parâmetro
+    ) {
         LocalDateTime agora = LocalDateTime.now();
-        long minutosRestantes = Duration.between(agora, compra.getDataExpiracao()).toMinutes();
-        int minutosParaExpirar = (int) Math.max(0, minutosRestantes);
+        Integer minutosParaExpirar = null;
+
+        if (compra.getDataExpiracao() != null) {
+            long minutosRestantes = Duration.between(agora, compra.getDataExpiracao()).toMinutes();
+            minutosParaExpirar = (int) Math.max(0, minutosRestantes);
+        }
+
+        // ✅ NOVO: Dados de pagamento manual
+        ReservaResponse.DadosPagamentoManual pagamentoManual = null;
+
+        if (rifa.getTipo() == TipoRifa.PAGA_MANUAL) {
+            pagamentoManual = ReservaResponse.DadosPagamentoManual.builder()
+                    .chavePix(vendedor.getChavePix())
+                    .nomeVendedor(vendedor.getNome())
+                    .emailVendedor(vendedor.getEmail())
+                    .valor(compra.getValorTotal())
+                    .mensagem("Faça o pagamento via PIX e envie o comprovante")
+                    .build();
+        }
 
         return ReservaResponse.builder()
                 .compraId(compra.getId())
                 .rifaId(compra.getRifaId())
                 .tituloRifa(tituloRifa)
+                .tipoRifa(rifa.getTipo().name())  // ✅ NOVO
                 .quantidadeNumeros(compra.getQuantidadeNumeros())
                 .numeros(numeros)
                 .valorTotal(compra.getValorTotal())
+                .status(compra.getStatus())
                 .dataExpiracao(compra.getDataExpiracao())
                 .minutosParaExpirar(minutosParaExpirar)
-                .pagamento(null) // Será preenchido após gerar PIX
+                .pagamentoManual(pagamentoManual)  // ✅ NOVO
                 .build();
     }
-
-    /**
-     * Converte Entity para Response resumida
-     */
     public CompraResumoResponse toResumoResponse(Compra compra) {
         return CompraResumoResponse.builder()
                 .id(compra.getId())
@@ -70,4 +94,6 @@ public class CompraMapper {
                 .dataCriacao(compra.getDataCriacao().format(FORMATTER))
                 .build();
     }
+
+
 }

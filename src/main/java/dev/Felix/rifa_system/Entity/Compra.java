@@ -23,6 +23,19 @@ import java.util.UUID;
 @Builder
 public class Compra {
 
+    @Column(length = 500)
+    private String comprovanteUrl;  // URL da imagem no Cloudinary
+
+    @Column
+    private LocalDateTime dataUploadComprovante;
+
+    @Column
+    private LocalDateTime dataConfirmacao;
+
+    @Column(length = 500)
+    private String observacaoVendedor;  // Motivo aprovação/rejeição
+
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
@@ -62,6 +75,14 @@ public class Compra {
     @UpdateTimestamp
     @Column(nullable = false)
     private LocalDateTime dataAtualizacao;
+
+    public boolean temComprovante() {
+        return comprovanteUrl != null && !comprovanteUrl.isEmpty();
+    }
+
+    public boolean aguardandoAnalise() {
+        return temComprovante() && isPendente();
+    }
 
     public boolean isPendente() {
         return this.status == StatusCompra.PENDENTE;

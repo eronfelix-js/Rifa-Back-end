@@ -1,6 +1,7 @@
 package dev.Felix.rifa_system.Entity;
 
 import dev.Felix.rifa_system.Enum.StatusRifa;
+import dev.Felix.rifa_system.Enum.TipoRifa;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -80,6 +81,23 @@ public class Rifa {
     @UpdateTimestamp
     @Column(nullable = false)
     private LocalDateTime dataAtualizacao;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @Builder.Default
+    private TipoRifa tipo = TipoRifa.PAGA_MANUAL;
+
+    public boolean isGratuita() {
+        return this.tipo == TipoRifa.GRATUITA;
+    }
+
+    public boolean isPagaManual() {
+        return this.tipo == TipoRifa.PAGA_MANUAL;
+    }
+
+    public boolean isPagaAutomatica() {
+        return this.tipo == TipoRifa.PAGA_AUTOMATICA;
+    }
 
     public boolean isAtiva() {
         return this.status == StatusRifa.ATIVA;
