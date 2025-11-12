@@ -3,7 +3,6 @@ package dev.Felix.rifa_system.Controller;
 
 import dev.Felix.rifa_system.Entity.Rifa;
 import dev.Felix.rifa_system.Enum.StatusNumero;
-import dev.Felix.rifa_system.Mapper.DtoImage.ImagemUploadResponse;
 import dev.Felix.rifa_system.Mapper.DtoRifa.CriarRifaRequest;
 import dev.Felix.rifa_system.Mapper.DtoRifa.RifaDetalhadaResponse;
 import dev.Felix.rifa_system.Mapper.DtoRifa.RifaResponse;
@@ -39,21 +38,6 @@ public class RifaController {
     private final NumeroService numeroService;
     private final RifaMapper rifaMapper;
     private final ImagemService imagemService;
-
-    @PostMapping
-    public ResponseEntity<RifaResponse> criar(
-            @Valid @RequestBody CriarRifaRequest request,
-            Authentication authentication) {
-
-        UUID usuarioId = UUID.fromString(authentication.getName());
-
-        Rifa rifa = rifaMapper.toEntity(request, usuarioId);
-        Rifa rifaCriada = rifaService.criar(rifa);
-
-        RifaResponse response = rifaMapper.toResponse(rifaCriada);
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
-    }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<RifaResponse> criar(
