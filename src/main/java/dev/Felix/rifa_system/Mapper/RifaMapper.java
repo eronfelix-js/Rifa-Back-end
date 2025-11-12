@@ -28,6 +28,9 @@ public class RifaMapper {
                 .precoPorNumero(request.getPrecoPorNumero())
                 .dataLimite(request.getDataLimite())
                 .sortearAoVenderTudo(request.getSortearAoVenderTudo())
+                .repassarTaxaCliente(request.getRepassarTaxaCliente())
+                .tipo(request.getTipo())
+                .sorteioAutomatico(request.getSortearAoVenderTudo())
                 .build();
     }
 
