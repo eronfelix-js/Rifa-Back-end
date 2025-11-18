@@ -75,3 +75,14 @@ app:
     expiration: 3600000
   cors:
     allowed-origins: ${alguma-coisa}
+  mercadopago:
+    # Obter em: https://www.mercadopago.com.br/developers/panel/app
+    access-token: ${MERCADOPAGO_ACCESS_TOKEN:}
+    public-key: ${MERCADOPAGO_PUBLIC_KEY:}
+    webhook-secret: ${MERCADOPAGO_WEBHOOK_SECRET:}
+    api-url: https://api.mercadopago.com
+    notification-url: ${MERCADOPAGO_NOTIFICATION_URL:}
+    pagamento:
+      pix:
+        expiracao-minutos: 15
+        taxa-percentual: 0.99

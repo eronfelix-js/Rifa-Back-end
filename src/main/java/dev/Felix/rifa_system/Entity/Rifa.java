@@ -85,7 +85,11 @@ public class Rifa {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default
-    private TipoRifa tipo = TipoRifa.PAGA_MANUAL;
+    private TipoRifa tipo = TipoRifa.GRATUITA;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean repassarTaxaCliente = true;
 
     public boolean isGratuita() {
         return this.tipo == TipoRifa.GRATUITA;

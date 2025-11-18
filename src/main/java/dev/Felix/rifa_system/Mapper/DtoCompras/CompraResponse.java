@@ -29,4 +29,10 @@ public class CompraResponse {
     private LocalDateTime dataExpiracao;
     private LocalDateTime dataCriacao;
     private LocalDateTime dataAtualizacao;
+
+    private String comprovanteUrl;
+    private LocalDateTime dataUploadComprovante;
+    private LocalDateTime dataConfirmacao;
+    private String observacaoVendedor;
+
 }

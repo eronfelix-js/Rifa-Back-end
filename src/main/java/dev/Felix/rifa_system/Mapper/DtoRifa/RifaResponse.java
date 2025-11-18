@@ -1,6 +1,7 @@
 package dev.Felix.rifa_system.Mapper.DtoRifa;
 
 import dev.Felix.rifa_system.Enum.StatusRifa;
+import dev.Felix.rifa_system.Enum.TipoRifa;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -37,4 +38,6 @@ public class RifaResponse {
     private Boolean sortearAoVenderTudo;
     private LocalDateTime dataCriacao;
     private LocalDateTime dataAtualizacao;
+    private TipoRifa tipo;
+    private Boolean repassarTaxaCliente;
 }

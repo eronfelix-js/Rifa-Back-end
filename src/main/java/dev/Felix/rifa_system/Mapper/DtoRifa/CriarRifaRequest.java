@@ -19,6 +19,9 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class CriarRifaRequest {
 
+    @Builder.Default
+    private Boolean repassarTaxaCliente = true;
+
     @NotNull
     private TipoRifa tipo;
 

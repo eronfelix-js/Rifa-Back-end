@@ -1,0 +1,2 @@
+ALTER TABLE rifas
+ADD COLUMN repassar_taxa_cliente BOOLEAN NOT NULL DEFAULT TRUE;

@@ -1,10 +1,10 @@
 package dev.Felix.rifa_system.Controller;
 
-
 import dev.Felix.rifa_system.Entity.Compra;
 import dev.Felix.rifa_system.Entity.Pagamento;
 import dev.Felix.rifa_system.Entity.Rifa;
 import dev.Felix.rifa_system.Entity.Usuario;
+import dev.Felix.rifa_system.Enum.TipoRifa;
 import dev.Felix.rifa_system.Mapper.CompraMapper;
 import dev.Felix.rifa_system.Mapper.DtoCompras.AprovarCompraRequest;
 import dev.Felix.rifa_system.Mapper.DtoCompras.CompraResponse;
@@ -68,7 +68,7 @@ public class CompraController {
     }
 
     /**
-     * ✅ NOVO: Upload de comprovante
+     * ✅ MANTIDO: Upload de comprovante
      */
     @PostMapping("/{compraId}/comprovante")
     public ResponseEntity<ComprovanteUploadResponse> uploadComprovante(
@@ -77,23 +77,19 @@ public class CompraController {
             Authentication authentication
     ) {
         log.info("POST /api/v1/compras/{}/comprovante", compraId);
-
         UUID compradorId = UUID.fromString(authentication.getName());
-
         Compra compra = compraService.uploadComprovante(compraId, arquivo, compradorId);
-
         ComprovanteUploadResponse response = ComprovanteUploadResponse.builder()
                 .compraId(compra.getId())
                 .comprovanteUrl(compra.getComprovanteUrl())
                 .dataUpload(compra.getDataUploadComprovante())
                 .mensagem("Comprovante enviado! Aguarde a aprovação do vendedor.")
                 .build();
-
         return ResponseEntity.ok(response);
     }
 
     /**
-     * ✅ NOVO: Vendedor aprovar compra
+     * ✅ MANTIDO: Vendedor aprovar compra
      */
     @PostMapping("/{compraId}/aprovar")
     public ResponseEntity<Void> aprovar(
@@ -107,6 +103,9 @@ public class CompraController {
         return ResponseEntity.noContent().build();
     }
 
+    /**
+     * ✅ MANTIDO: Rejeitar compra
+     */
     @PostMapping("/{compraId}/rejeitar")
     public ResponseEntity<Void> rejeitar(
             @PathVariable UUID compraId,
@@ -121,6 +120,10 @@ public class CompraController {
 
         return ResponseEntity.noContent().build();
     }
+
+    /**
+     * ✅ MANTIDO: Listar compras pendentes com comprovante
+     */
     @GetMapping("/rifa/{rifaId}/pendentes")
     public ResponseEntity<Page<CompraResponse>> listarPendentes(
             @PathVariable UUID rifaId,
@@ -147,8 +150,12 @@ public class CompraController {
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * ✅ ATUALIZADO: Gerar pagamento PIX com Mercado Pago
+     * Agora com fallback para pagamento manual se MP falhar
+     */
     @PostMapping("/{compraId}/pagamento/pix")
-    public ResponseEntity<PagamentoPixResponse> gerarPagamentoPix(
+    public ResponseEntity<?> gerarPagamentoPix(
             @PathVariable UUID compraId,
             Authentication authentication
     ) {
@@ -163,26 +170,48 @@ public class CompraController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
-        // TODO: Integrar com PicPay para gerar QR Code real
-        // Por enquanto, vamos criar um pagamento mockado
-        String qrCodeMock = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
-        String qrCodePayloadMock = "00020126580014br.gov.bcb.pix0136" + compraId.toString();
+        // Validar tipo de rifa
+        Rifa rifa = rifaService.buscarPorId(compra.getRifaId());
+        if (rifa.getTipo() != TipoRifa.PAGA_AUTOMATICA) {
+            log.warn("Tentativa de gerar PIX automático para rifa tipo: {}", rifa.getTipo());
+            return ResponseEntity.badRequest().body(
+                    new ErrorResponse("Esta rifa não aceita pagamento automático")
+            );
+        }
 
-        Pagamento pagamento = pagamentoService.criarPagamentoPix(
-                compraId,
-                qrCodeMock,
-                qrCodePayloadMock
-        );
+        try {
+            // ✅ NOVO: Tentar criar pagamento PIX no Mercado Pago
+            log.info("🔄 Tentando gerar PIX via Mercado Pago...");
 
-        PagamentoPixResponse response = pagamentoMapper.toPixResponse(pagamento);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+            Pagamento pagamento = pagamentoService.criarPagamentoPix(compraId);
+            PagamentoPixResponse response = pagamentoMapper.toPixResponse(pagamento);
+
+            log.info("✅ PIX gerado com sucesso via Mercado Pago");
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+
+        } catch (Exception e) {
+            log.error("❌ Erro ao gerar PIX no Mercado Pago: {}", e.getMessage(), e);
+
+            // ✅ NOVO: Fallback para pagamento manual
+            log.warn("⚠️ Fallback ativado - Redirecionando para pagamento manual");
+
+            Usuario vendedor = usuarioService.buscarPorId(rifa.getUsuarioId());
+
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(
+                    FallbackPagamentoResponse.builder()
+                            .erro("PIX automático indisponível no momento")
+                            .mensagem("Por favor, faça o pagamento manualmente usando os dados abaixo e envie o comprovante")
+                            .chavePix(vendedor.getChavePix())
+                            .nomeVendedor(vendedor.getNome())
+                            .valorPagar(compra.getValorTotal())
+                            .compraId(compraId)
+                            .urlUploadComprovante("/api/v1/compras/" + compraId + "/comprovante")
+                            .build()
+            );
+        }
     }
 
-    /**
-     * Buscar compra por ID
-     */
     @GetMapping("/{id}")
-
     public ResponseEntity<CompraResponse> buscarPorId(
             @PathVariable UUID id,
             Authentication authentication
@@ -206,9 +235,6 @@ public class CompraController {
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * Listar minhas compras (CLIENTE)
-     */
     @GetMapping("/minhas")
     public ResponseEntity<Page<CompraResponse>> listarMinhas(
             @PageableDefault(size = 20) Pageable pageable,
@@ -229,7 +255,7 @@ public class CompraController {
     }
 
     /**
-     * Listar compras de uma rifa (VENDEDOR)
+     * ✅ MANTIDO: Listar compras de uma rifa
      */
     @GetMapping("/rifa/{rifaId}")
     public ResponseEntity<Page<CompraResponse>> listarPorRifa(
@@ -259,7 +285,7 @@ public class CompraController {
     }
 
     /**
-     * Buscar números de uma compra
+     * ✅ MANTIDO: Buscar números de uma compra
      */
     @GetMapping("/{id}/numeros")
     public ResponseEntity<List<Integer>> buscarNumeros(
@@ -284,7 +310,7 @@ public class CompraController {
     }
 
     /**
-     * Consultar status de um pagamento
+     * ✅ MANTIDO: Consultar status de um pagamento
      */
     @GetMapping("/{compraId}/pagamento")
     public ResponseEntity<PagamentoPixResponse> consultarPagamento(
@@ -306,5 +332,28 @@ public class CompraController {
         PagamentoPixResponse response = pagamentoMapper.toPixResponse(pagamento);
 
         return ResponseEntity.ok(response);
+    }
+
+    /**
+     * ✅ NOVO: DTOs para responses
+     */
+    @lombok.Data
+    @lombok.AllArgsConstructor
+    private static class ErrorResponse {
+        private String erro;
+    }
+
+    @lombok.Data
+    @lombok.Builder
+    @lombok.NoArgsConstructor
+    @lombok.AllArgsConstructor
+    private static class FallbackPagamentoResponse {
+        private String erro;
+        private String mensagem;
+        private String chavePix;
+        private String nomeVendedor;
+        private java.math.BigDecimal valorPagar;
+        private UUID compraId;
+        private String urlUploadComprovante;
     }
 }

@@ -73,7 +73,7 @@ public class CompraService {
                 .status(StatusCompra.CONFIRMADO) // ✅ Já confirmado
                 .valorTotal(BigDecimal.ZERO)
                 .quantidadeNumeros(numeros.size())
-                .dataExpiracao(null) // Rifa grátis não expira
+                .dataExpiracao(LocalDateTime.now()) // Rifa grátis não expira
                 .build();
 
         compra = compraRepository.save(compra);
@@ -167,23 +167,17 @@ public class CompraService {
     @Transactional
     public void confirmarPagamento(UUID compraId) {
         log.info("Confirmando pagamento da compra: {}", compraId);
-
         Compra compra = buscarPorId(compraId);
-
         if (!compra.isPendente()) {
             log.warn("Compra {} já foi processada. Status: {}", compraId, compra.getStatus());
             return;
         }
-
         compra.confirmarPagamento();
         compraRepository.save(compra);
-
         List<Numero> numeros = numeroRepository.findByCompraId(compraId);
         numeros.forEach(Numero::vender);
         numeroRepository.saveAll(numeros);
-
         log.info("✅ Pagamento confirmado - {} números vendidos", numeros.size());
-
         verificarRifaCompleta(compra.getRifaId());
     }
 
@@ -251,33 +245,27 @@ public class CompraService {
     @Transactional
     public Compra uploadComprovante(UUID compraId, MultipartFile arquivo, UUID compradorId) {
         log.info("📸 Upload de comprovante - Compra: {}", compraId);
-
         // Buscar e validar compra
         Compra compra = buscarPorId(compraId);
-
         // Validar dono
         if (!compra.getCompradorId().equals(compradorId)) {
             throw new BusinessException("Você não pode enviar comprovante para esta compra");
         }
-
         // Validar status
         if (!compra.isPendente()) {
             throw new BusinessException("Compra já foi processada");
         }
-
         // Validar se já tem comprovante
         if (compra.temComprovante()) {
             log.warn("Compra já possui comprovante. Será substituído.");
             // Deletar comprovante antigo do Cloudinary
             imagemService.deletarImagem(extrairPublicId(compra.getComprovanteUrl()));
         }
-
         // Upload no Cloudinary
         var uploadResponse = imagemService.uploadImagemRifa(
                 arquivo,
                 "comprovantes/" + compraId
         );
-
         // Atualizar compra
         compra.setComprovanteUrl(uploadResponse.getUrl());
         compra.setDataUploadComprovante(LocalDateTime.now());

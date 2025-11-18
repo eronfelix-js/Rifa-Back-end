@@ -32,6 +32,10 @@ public class ReservaResponse {
     private Integer minutosParaExpirar;
     private StatusCompra status;
 
+    private BigDecimal subtotal;
+    private BigDecimal valorTaxa;
+    private Boolean taxaRepassada;
+
     // Dados do pagamento PIX (pode ser null)
     private PagamentoPixResponse pagamento;
 
@@ -45,7 +49,11 @@ public class ReservaResponse {
         private String chavePix;
         private String nomeVendedor;
         private String emailVendedor;
-        private BigDecimal valor;
+        private BigDecimal valorPagar;
         private String mensagem;
+
+        private BigDecimal subtotal;
+        private BigDecimal valorTaxa;
+        private Boolean taxaRepassada;
     }
 }
