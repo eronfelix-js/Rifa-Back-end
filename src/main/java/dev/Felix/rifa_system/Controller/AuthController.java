@@ -7,6 +7,7 @@ import dev.Felix.rifa_system.Mapper.DtoUsuario.RegistrarUsuarioRequest;
 import dev.Felix.rifa_system.Mapper.DtoUsuario.UsuarioResponse;
 import dev.Felix.rifa_system.Mapper.UsuarioMapper;
 import dev.Felix.rifa_system.Service.AuthService;
+import dev.Felix.rifa_system.Service.EmailService;
 import dev.Felix.rifa_system.Service.UsuarioService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +28,7 @@ public class AuthController {
     private final AuthService authService;
     private final UsuarioService usuarioService;
     private final UsuarioMapper usuarioMapper;
+    private final EmailService emailService;
 
     @PostMapping("/register")
     public ResponseEntity<UsuarioResponse> registrar(@Valid @RequestBody RegistrarUsuarioRequest request) {
@@ -35,7 +37,7 @@ public class AuthController {
         Usuario usuario = usuarioMapper.toEntity(request);
         Usuario usuarioSalvo = usuarioService.registrar(usuario);
         UsuarioResponse response = usuarioMapper.toResponse(usuarioSalvo);
-
+        emailService.enviarEmailBoasVindas(usuarioSalvo);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 

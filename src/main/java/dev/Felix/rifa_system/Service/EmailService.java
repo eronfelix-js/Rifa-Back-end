@@ -69,19 +69,14 @@ public class EmailService {
     @Async
     public void enviarEmailBoasVindas(Usuario usuario) {
         log.info("📧 Enviando email de boas-vindas para: {}", usuario.getEmail());
-
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-
             helper.setTo(usuario.getEmail());
             helper.setSubject("🎉 Bem-vindo ao Sistema de Rifas!");
             helper.setText(gerarHtmlBoasVindas(usuario), true);
-
             mailSender.send(message);
-
             log.info("✅ Email de boas-vindas enviado");
-
         } catch (MessagingException e) {
             log.error("❌ Erro ao enviar email de boas-vindas: {}", e.getMessage());
         }
