@@ -3,6 +3,7 @@ package dev.Felix.rifa_system.Service;
 import dev.Felix.rifa_system.Entity.Compra;
 import dev.Felix.rifa_system.Entity.Numero;
 import dev.Felix.rifa_system.Entity.Rifa;
+import dev.Felix.rifa_system.Entity.Usuario;
 import dev.Felix.rifa_system.Enum.StatusCompra;
 import dev.Felix.rifa_system.Enum.StatusNumero;
 import dev.Felix.rifa_system.Enum.TipoRifa;
@@ -36,6 +37,7 @@ public class CompraService {
     private final RifaService rifaService;
     private final ImagemService imagemService;
     private final UsuarioService usuarioService;
+    private final EmailService emailService;
 
     @Value("${app.reserva.tempo-expiracao-minutos:15}")
     private Integer tempoExpiracaoMinutos;
@@ -282,25 +284,20 @@ public class CompraService {
     @Transactional
     public void aprovarCompra(UUID compraId, UUID vendedorId, String observacao) {
         log.info("✅ Aprovando compra: {} - Vendedor: {}", compraId, vendedorId);
-
         Compra compra = buscarPorId(compraId);
-
         // Validar que é o dono da rifa
         Rifa rifa = rifaService.buscarPorId(compra.getRifaId());
         if (!rifa.getUsuarioId().equals(vendedorId)) {
             throw new BusinessException("Apenas o dono da rifa pode aprovar");
         }
-
         // Validar status
         if (!compra.isPendente()) {
             throw new BusinessException("Compra já foi processada");
         }
-
         // Validar comprovante
         if (!compra.temComprovante()) {
             throw new BusinessException("Compra não possui comprovante");
         }
-
         // Confirmar pagamento (reutiliza lógica existente)
         compra.confirmarPagamento();
         compra.setObservacaoVendedor(observacao);
@@ -313,8 +310,19 @@ public class CompraService {
         numeroRepository.saveAll(numeros);
 
         log.info("✅ Compra aprovada - {} números vendidos", numeros.size());
-
         verificarRifaCompleta(compra.getRifaId());
+
+        try{
+            Usuario comprador = usuarioService.buscarPorId(compra.getCompradorId());
+            emailService.enviarEmailAprovado(compra, comprador,
+                    numeros.stream().map(Numero::getNumero).toList(
+            ));
+            log.info("📨 Email de aprovação enviado para {}", comprador.getEmail());
+        }catch (Exception e){
+            log.error("❌ Falha ao enviar email de aprovação para compra {}: {}",
+                    compraId, e.getMessage());
+        }
+
     }
     @Transactional
     public void rejeitarCompra(UUID compraId, UUID vendedorId, String observacao) {
@@ -339,6 +347,15 @@ public class CompraService {
         // Liberar números
         liberarNumeros(compraId);
         log.info("❌ Compra rejeitada - Números liberados");
+
+        try{
+            Usuario comprador = usuarioService.buscarPorId(compra.getCompradorId());
+            emailService.enviarNotificacaoRejeicao(compra, comprador, observacao);
+            log.info("📨 Email de rejeição enviado para {}", comprador.getEmail());
+        } catch (Exception e) {
+            log.error("❌ Falha ao enviar email de rejeição para compra {}: {}",
+                    compraId, e.getMessage());
+        }
     }
 
     /**

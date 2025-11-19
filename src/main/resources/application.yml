@@ -55,6 +55,20 @@ spring:
       max-file-size: 5MB
       max-request-size: 5MB
       file-size-threshold: 2KB
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${EMAIL_USERNAME}
+    password: ${EMAIL_APP_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+        transport:
+          protocol: smtp
 
 cloudinary:
   cloud-name: ${CLOUDINARY_CLOUD_NAME:seu_cloud_name}
