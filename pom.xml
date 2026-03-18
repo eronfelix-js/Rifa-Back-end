@@ -131,13 +131,6 @@
 		<scope>test</scope>
 	</dependency>
 
-		<!-- Mercado Pago SDK -->
-		<dependency>
-			<groupId>com.mercadopago</groupId>
-			<artifactId>sdk-java</artifactId>
-			<version>2.1.24</version>
-		</dependency>
-
 		<!-- Jackson para JSON -->
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
