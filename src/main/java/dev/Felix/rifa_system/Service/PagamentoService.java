@@ -1,15 +1,8 @@
 package dev.Felix.rifa_system.Service;
 
-import dev.Felix.rifa_system.Entity.Compra;
 import dev.Felix.rifa_system.Entity.Pagamento;
-import dev.Felix.rifa_system.Entity.Usuario;
-import dev.Felix.rifa_system.Enum.StatusPagamento;
 import dev.Felix.rifa_system.Exceptions.BusinessException;
 import dev.Felix.rifa_system.Exceptions.ResourceNotFoundException;
-
-import dev.Felix.rifa_system.Integração.Dto.PixResponse;
-import dev.Felix.rifa_system.Integração.Exception.MercadoPagoException;
-import dev.Felix.rifa_system.Integração.MercadoPago.MercadoPagoService;
 import dev.Felix.rifa_system.Repository.PagamentoRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,53 +19,10 @@ public class PagamentoService {
     private final PagamentoRepository pagamentoRepository;
     private final CompraService compraService;
     private final UsuarioService usuarioService;
-    private final MercadoPagoService mercadoPagoService; // ✅ NOVO
 
     @Transactional
     public Pagamento criarPagamentoPix(UUID compraId) {
-        log.info("💰 Criando pagamento PIX para compra: {}", compraId);
-
-        // Validar se já existe pagamento
-        if (pagamentoRepository.existsByCompraId(compraId)) {
-            log.warn("⚠️ Pagamento já existe para compra {}", compraId);
-            return pagamentoRepository.findByCompraId(compraId)
-                    .orElseThrow(() -> new BusinessException("Erro ao buscar pagamento existente"));
-        }
-
-        // Buscar compra
-        Compra compra = compraService.buscarPorId(compraId);
-
-        // Validar status
-        if (!compra.isPendente()) {
-            throw new BusinessException("Compra não está pendente");
-        }
-
-        // Buscar dados do comprador
-        Usuario comprador = usuarioService.buscarPorId(compra.getCompradorId());
-
-        try {
-            // ✅ NOVO: Chamar Mercado Pago para gerar PIX
-            PixResponse pixResponse = mercadoPagoService.criarPagamentoPix(compra, comprador);
-
-            // Criar registro de pagamento no banco
-            Pagamento pagamento = Pagamento.builder()
-                    .compraId(compraId)
-                    .gateway("MERCADOPAGO") // ✅ MUDOU de PICPAY
-                    .referenceId(pixResponse.getId().toString()) // ✅ MUDOU: agora é o payment ID do MP
-                    .qrCode(pixResponse.getQrCodeBase64())
-                    .qrCodePayload(pixResponse.getQrCode())
-                    .valor(compra.getValorTotal())
-                    .status(StatusPagamento.AGUARDANDO)
-                    .dataExpiracao(compra.getDataExpiracao())
-                    .build();
-            pagamento = pagamentoRepository.save(pagamento);
-            log.info("✅ Pagamento PIX criado - ID: {} - MP Payment ID: {}",
-                    pagamento.getId(), pixResponse.getId());
-            return pagamento;
-        } catch (MercadoPagoException e) {
-            log.error("❌ Erro ao criar PIX no Mercado Pago: {}", e.getMessage());
-            throw new BusinessException("Erro ao gerar pagamento PIX: " + e.getMessage(), e);
-        }
+        throw new BusinessException("Pagamento PIX temporariamente indisponível");
     }
 
     /**
@@ -183,17 +133,5 @@ public class PagamentoService {
     public Pagamento buscarPorCompra(UUID compraId) {
         return pagamentoRepository.findByCompraId(compraId)
                 .orElseThrow(() -> new ResourceNotFoundException("Pagamento não encontrado para compra: " + compraId));
-    }
-
-    /**
-     * ✅ NOVO: Verificar se Mercado Pago está disponível
-     */
-    public boolean mercadoPagoDisponivel() {
-        try {
-            return mercadoPagoService.verificarConexao();
-        } catch (Exception e) {
-            log.error("❌ Mercado Pago indisponível: {}", e.getMessage());
-            return false;
-        }
     }
 }
