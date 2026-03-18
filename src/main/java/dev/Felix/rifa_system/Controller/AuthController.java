@@ -33,7 +33,6 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<UsuarioResponse> registrar(@Valid @RequestBody RegistrarUsuarioRequest request) {
         log.info("POST /api/v1/auth/register - Email: {}", request.getEmail());
-
         Usuario usuario = usuarioMapper.toEntity(request);
         Usuario usuarioSalvo = usuarioService.registrar(usuario);
         UsuarioResponse response = usuarioMapper.toResponse(usuarioSalvo);

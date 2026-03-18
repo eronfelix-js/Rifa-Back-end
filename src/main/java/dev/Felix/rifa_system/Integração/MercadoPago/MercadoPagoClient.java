@@ -3,7 +3,7 @@ package dev.Felix.rifa_system.Integração.MercadoPago;
 import dev.Felix.rifa_system.Integração.Dto.PaymentDetailsResponse;
 import dev.Felix.rifa_system.Integração.Dto.PixRequest;
 import dev.Felix.rifa_system.Integração.Dto.PixResponse;
-import dev.Felix.rifa_system.Integração.EXception.MercadoPagoException;
+import dev.Felix.rifa_system.Integração.Exception.MercadoPagoException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;

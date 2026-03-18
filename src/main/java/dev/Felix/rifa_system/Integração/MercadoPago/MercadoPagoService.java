@@ -5,7 +5,7 @@ import dev.Felix.rifa_system.Entity.Compra;
 import dev.Felix.rifa_system.Entity.Usuario;
 import dev.Felix.rifa_system.Integração.Dto.PixRequest;
 import dev.Felix.rifa_system.Integração.Dto.PixResponse;
-import dev.Felix.rifa_system.Integração.EXception.MercadoPagoException;
+import dev.Felix.rifa_system.Integração.Exception.MercadoPagoException;
 import dev.Felix.rifa_system.Integração.Dto.PaymentDetailsResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

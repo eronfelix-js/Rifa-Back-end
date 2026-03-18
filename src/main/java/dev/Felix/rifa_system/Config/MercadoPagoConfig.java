@@ -1,6 +1,6 @@
 package dev.Felix.rifa_system.Config;
 
-import dev.Felix.rifa_system.Integração.EXception.MercadoPagoException;
+import dev.Felix.rifa_system.Integração.Exception.MercadoPagoException;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;

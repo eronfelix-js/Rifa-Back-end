@@ -8,7 +8,7 @@ import dev.Felix.rifa_system.Exceptions.BusinessException;
 import dev.Felix.rifa_system.Exceptions.ResourceNotFoundException;
 
 import dev.Felix.rifa_system.Integração.Dto.PixResponse;
-import dev.Felix.rifa_system.Integração.EXception.MercadoPagoException;
+import dev.Felix.rifa_system.Integração.Exception.MercadoPagoException;
 import dev.Felix.rifa_system.Integração.MercadoPago.MercadoPagoService;
 import dev.Felix.rifa_system.Repository.PagamentoRepository;
 import lombok.RequiredArgsConstructor;

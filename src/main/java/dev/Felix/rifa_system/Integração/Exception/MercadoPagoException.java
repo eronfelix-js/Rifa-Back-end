@@ -1,4 +1,4 @@
-package dev.Felix.rifa_system.Integração.EXception;
+package dev.Felix.rifa_system.Integração.Exception;
 
 /**
  * Exception customizada para erros de integração com Mercado Pago
