@@ -88,7 +88,8 @@ app:
     secret: ${JWT_SECRET}
     expiration: 3600000
   cors:
-    allowed-origins: ${alguma-coisa}
+    allowed-origins: "*"
+
   mercadopago:
     # Obter em: https://www.mercadopago.com.br/developers/panel/app
     access-token: ${MERCADOPAGO_ACCESS_TOKEN:}
