@@ -58,8 +58,8 @@ spring:
   mail:
     host: smtp.gmail.com
     port: 587
-    username: ${EMAIL_USERNAME}
-    password: ${EMAIL_APP_PASSWORD}
+    username: ${EMAIL_USERNAME:fake@email.com}
+    password: ${EMAIL_APP_PASSWORD:fake_password}
     properties:
       mail:
         smtp:
@@ -85,19 +85,7 @@ app:
     max-size: 5242880 # 5MB em bytes
     allowed-types: image/jpeg,image/png,image/webp,image/jpg
   jwt:
-    secret: ${JWT_SECRET}
+    secret: ${JWT_SECRET:chave_fake_apenas_para_build_nao_usar_em_producao}
     expiration: 3600000
   cors:
     allowed-origins: "*"
-
-  mercadopago:
-    # Obter em: https://www.mercadopago.com.br/developers/panel/app
-    access-token: ${MERCADOPAGO_ACCESS_TOKEN:}
-    public-key: ${MERCADOPAGO_PUBLIC_KEY:}
-    webhook-secret: ${MERCADOPAGO_WEBHOOK_SECRET:}
-    api-url: https://api.mercadopago.com
-    notification-url: ${MERCADOPAGO_NOTIFICATION_URL:}
-    pagamento:
-      pix:
-        expiracao-minutos: 15
-        taxa-percentual: 0.99
