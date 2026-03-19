@@ -1,6 +1,6 @@
 spring:
   application:
-    name: rifa-system
+    name: rifa-system-backend
 
   # Database PostgreSQL
   datasource:
