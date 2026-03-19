@@ -7,7 +7,6 @@ CREATE TABLE IF NOT EXISTS usuario (
     senha VARCHAR(255) NOT NULL,
     role VARCHAR(20) NOT NULL,
     ativo BOOLEAN NOT NULL DEFAULT TRUE,
-    chave_pix VARCHAR(100),
     data_criacao TIMESTAMP NOT NULL DEFAULT NOW(),
     data_atualizacao TIMESTAMP NOT NULL DEFAULT NOW()
 );
