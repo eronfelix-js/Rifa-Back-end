@@ -4,7 +4,7 @@ spring:
 
   # Database PostgreSQL
   datasource:
-    url: ${DATABASE_URL}
+    url: jdbc:postgresql://postgres.railway.internal:5432/railway
     username: ${PGUSER}
     password: ${PGPASSWORD}
     driver-class-name: org.postgresql.Driver
